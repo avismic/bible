@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible Verses</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #FFEEF0;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #ba6a92;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+        .verse-input, .filter-input, .search-input {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input, select, button, textarea {
+            padding: 10px;
+            border: 2px solid #bf979e;
+            border-radius: 10px;
+            font-size: 1rem;
+            background-color: #FFF0F5;
+            color: #333;
+        }
+        button {
+            background-color: #FFB6C1;
+            cursor: pointer;
+            border: none;
+            color: #FFF;
+        }
+        button:hover {
+            background-color: #a34775;
+        }
+        .verse-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .verse-item {
+            display: grid;
+            grid-template-columns: 8fr 2fr 1fr 1fr 1fr 1fr;
+            align-items: center;
+            background-color: #FFF0F5;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #FFC0CB;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            column-gap: 20px;
+        }
+        .delete-button, .edit-button, .favorite-button, .share-button {
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1rem;
+        }
+        .delete-button { color: #FF1493; }
+        .edit-button { color: #f31f0c; }
+        .favorite-button { color: #FFD700; }
+        .share-button { color: #4CAF50; }
+        .delete-button:hover { background-color: #FF69B4;color: white; }
+        .edit-button:hover { background-color: #FF69B4;color: white; }
+        .favorite-button:hover { background-color: #FF69B4;color: white; }
+        .share-button:hover { background-color: #FF69B4;color: white; }
+    </style>
+</head>
+<body>
+    <h1>Bible Verses</h1>
+    <div class="verse-input">
+        <input type="text" id="verse" placeholder="Enter your Bible verse">
+        <select id="tags">
+            <option value="Inspiration">Inspiration</option>
+            <option value="Faith">Faith</option>
+            <option value="Hope">Hope</option>
+            <option value="Love">Love</option>
+            <option value="Strength">Strength</option>
+            <option value="Wisdom">Wisdom</option>
+            <option value="Peace">Peace</option>
+        </select>
+        <button onclick="addVerse()">Add</button>
+    </div>
+
+    <div class="search-input">
+        <input type="text" id="search" placeholder="Search verses" oninput="filterVerses()">
+    </div>
+
+    <div class="filter-input">
+        <select id="filterTags" onchange="filterVerses()">
+            <option value="All">All</option>
+            <option value="Inspiration">Inspiration</option>
+            <option value="Faith">Faith</option>
+            <option value="Hope">Hope</option>
+            <option value="Love">Love</option>
+            <option value="Strength">Strength</option>
+            <option value="Wisdom">Wisdom</option>
+            <option value="Peace">Peace</option>
+        </select>
+    </div>
+
+    <ul id="verseList" class="verse-list"></ul>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadVerses);
+
+        function addVerse() {
+            const verse = document.getElementById('verse').value;
+            const tags = document.getElementById('tags').value;
+            const date = new Date().toLocaleDateString();
+            const verseItem = {
+                verse,
+                tags,
+                date,
+                favorite: false,
+                note: '',
+            };
+
+            let verses = JSON.parse(localStorage.getItem('verses')) || [];
+            verses.push(verseItem);
+            localStorage.setItem('verses', JSON.stringify(verses));
+
+            displayVerses();
+        }
+
+        function displayVerses(filterTag = "All", searchKeyword = "") {
+            const verseList = document.getElementById('verseList');
+            verseList.innerHTML = '';
+            const verses = JSON.parse(localStorage.getItem('verses')) || [];
+
+            verses.forEach((item, index) => {
+                if ((filterTag === "All" || item.tags === filterTag) && item.verse.toLowerCase().includes(searchKeyword.toLowerCase())) {
+                    const li = document.createElement('li');
+                    li.className = 'verse-item';
+                    li.innerHTML = `
+                        ${item.verse} 
+                        <span>${item.tags}</span> 
+                        <span> ${item.date}</span> 
+                        <button class="favorite-button" onclick="toggleFavorite(${index})">${item.favorite ? '★' : '☆'}</button>
+                        <button class="edit-button" onclick="editVerse(${index})">Edit</button>
+                        <button class="delete-button" onclick="deleteVerse(${index})">Delete</button>
+                        
+                    `;
+                    verseList.appendChild(li);
+                }
+            });
+        }
+
+        function deleteVerse(index) {
+            let verses = JSON.parse(localStorage.getItem('verses')) || [];
+            verses.splice(index, 1);
+            localStorage.setItem('verses', JSON.stringify(verses));
+            filterVerses();
+        }
+
+        function editVerse(index) {
+            let verses = JSON.parse(localStorage.getItem('verses')) || [];
+            const verse = prompt("Edit your verse:", verses[index].verse);
+            if (verse !== null) {
+                verses[index].verse = verse;
+                localStorage.setItem('verses', JSON.stringify(verses));
+                filterVerses();
+            }
+        }
+
+        function toggleFavorite(index) {
+            let verses = JSON.parse(localStorage.getItem('verses')) || [];
+            verses[index].favorite = !verses[index].favorite;
+            localStorage.setItem('verses', JSON.stringify(verses));
+            filterVerses();
+        }
+
+        function filterVerses() {
+            const filterTag = document.getElementById('filterTags').value;
+            const searchKeyword = document.getElementById('search').value;
+            displayVerses(filterTag, searchKeyword);
+        }
+
+        function loadVerses() {
+            filterVerses();
+        }
+
+        function shareVerse(verse) {
+            alert(`Share this verse: ${verse}`);
+        }
+    </script>
+</body>
+</html>
